@@ -153,7 +153,7 @@ app.post('download-schedule', (req, res) => {
 })
 
 // Маршрут для удаления расписания включения КА в РУ часы
-app.post('delete-schedule', (res, req) => {
+app.post('delete-schedule', (req, res) => {
 	const {
 		imei
 	} = req.body
@@ -180,12 +180,12 @@ app.post('delete-schedule', (res, req) => {
 })
 
 // Маршррут для назначения РО КА
-app.post('/switch-ka', (res, req) => {
+app.post('/switch-ka', (req, res) => {
 	const {
 		imei,
 		kaNumber,
 		state
-	} = res.body
+	} = req.body
 
 	if (!imei || !kaNumber || !state) {
 		return res.status(400).json({
@@ -193,7 +193,7 @@ app.post('/switch-ka', (res, req) => {
 		})
 	}
 
-	const mqttClient = require('mqtt').connect('mqtt:localhost:1883')
+	const mqttClient = require('mqtt').connect(MQTT)
 	mqttClient.on('connect', () => {
 		mqttClient.publish(`controllers/${imei}/in/outputs/${kaNumber}/switch`, state.toString(), err => {
 			if (err) {
@@ -208,12 +208,13 @@ app.post('/switch-ka', (res, req) => {
 	})
 })
 
-app.post('/set-ka-mode', (res, req) => {
+// Маршрут для назначения РУ Ка
+app.post('/set-ka-mode', (req, res) => {
 	const {
 		imei,
 		kaNumber,
 		mode
-	} = res.body
+	} = req.body
 
 	if (!imei || !kaNumber || !mode) {
 		return res.status(400).json({
@@ -221,7 +222,7 @@ app.post('/set-ka-mode', (res, req) => {
 		})
 	}
 
-	const mqttClient = require('mqtt').connect('mqtt:localhost:1883')
+	const mqttClient = require('mqtt').connect(MQTT)
 	mqttClient.on('connect', () => {
 		mqttClient.publish(`controllers/${imei}/in/outputs/${kaNumber}/mode`, mode.toString(), err => {
 			if (err) {
@@ -235,6 +236,116 @@ app.post('/set-ka-mode', (res, req) => {
 		})
 	})
 })
+
+// Маршрут для установки/снятия блокировки смены РО для КА
+app.post('/set-ka-lock', (req, res) => {
+	const {
+		imei,
+		kaNumber,
+		lockState
+	} = req.body
+
+	if (!imei || !kaNumber || !lockState) {
+		return res.status(400).json({
+			error: 'Missing required fields'
+		})
+	}
+
+	const mqttClient = require('mqtt').connect(MQTT)
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/outputs/${kaNumber}/lock`, lockState.toString(), err => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				})
+			}
+			res.json({
+				status: 'Command set'
+			})
+		})
+	})
+})
+
+//Маршрут для установки/снятия флага автоматического перехода из РУ А В РУ Ч
+app.post('/set-ka-flag', (req, res) => {
+	const {
+		imei,
+		kaNumber,
+		flagState
+	} = req.body
+
+	if (!imei || !kaNumber || !flagState) {
+		return res.status(400).json({
+			error: 'Missing required fields'
+		})
+	}
+
+	const mqttClient = require('mqtt').connect(MQTT)
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/outputs/${kaNumber}/flag`, flagState.toString(), err => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				})
+			}
+			res.json({
+				status: 'Command set'
+			})
+		})
+	})
+})
+
+//Маршрут для получения РО для каждого РУ КА
+app.post('/get-ka-ro', (req, res) => {
+	const {
+		imei
+	} = req.body
+	if (!imei) {
+		return res.status(400).json({
+			error: 'Missing require fields'
+		})
+	}
+
+	const mqttClient = require('mqtt').connect(MQTT)
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/outputs/predict`, '', (err) => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				})
+			}
+			res.json({
+				status: 'Command sent'
+			})
+		})
+	})
+})
+
+//Маршрут для получения текущих значений напряжений на входах
+app.post('/get-input-voltages', (req, res) => {
+	const {
+		imei
+	} = req.body;
+	if (!imei) {
+		return res.status(400).json({
+			error: 'Missing required fields'
+		});
+	}
+
+	const mqttClient = require('mqtt').connect('mqtt://localhost:1883');
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/inputs/get`, '', (err) => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				});
+			}
+			res.json({
+				status: 'Command sent'
+			});
+		});
+	});
+});
 
 app.listen(HTTP_PORT, () => {
 	console.log(`HTTP server started on port ${HTTP_PORT}`);

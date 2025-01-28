@@ -291,5 +291,71 @@ function handleCommand(topic, payload) {
 				console.log("Response sent to out/outputs/lock:", response);
 			}, 1000)
 		}
+
+		//Установка/снятие флага автоматического перехода из РУ А в РУ Ч
+		if (commandTopic.startsWith("in/outputs") && commandTopic.endWidth("/flag")) {
+			const kaNumber = commandTopic.split('/')[2]
+			const flagState = payload
+			console.log(`Received command to set flag for KA ${kaNumber} to ${flagState}`)
+
+			setTimeout(() => {
+				const response = {
+					status: 'success',
+					message: `KA ${kaNumber} flag set to ${flagState}`
+				}
+				aedes.publish({
+					topic: `controllers/${imei}/out/outputs/${kaNumber}/flag`,
+					payload: JSON.stringify(response)
+				})
+				console.log("Response sent to out/outputs/flag:", response);
+			}, 1000)
+		}
+
+		//Получить РО для каждого РУ КА
+		if (commandTopic === "in/outputs/predict") {
+			console.log("Received command to get RO for each RU")
+
+			const response = {
+				status: 'success',
+				data: [0, 1, 2, 3, 4, 5]
+			}
+			aedes.publish({
+				topic: `controllers/${imei}/out/outputs/prediction`,
+				payload: JSON.stringify(response)
+			})
+			console.log("Response sent to out/outputs/prediction:", response)
+		}
+
+		//Получить текущее значения напряжений на входах
+		if (commandTopic === "in/outputs/get") {
+			console.log("Received command to get current input voltages")
+
+			const response = {
+				status: 'success',
+				mask: 0b10101010
+			}
+			aedes.publish({
+				topic: `controllers/${imei}/out/input/x`,
+				payload: JSON.stringify(response)
+			})
+			console.log("Response sent to out/inputs/x:", response)
+		}
+
+		//Провести диагностику ПУ
+		if (commandTopic === "in/commands/info/get") {
+			console.log("Received command to perform diagnostics");
+
+			// Имитация выполнения диагностики
+			const response = {
+				status: 'success',
+				data: [1, 0, 1] // Пример данных (1 - модуль на связи, 0 - модуль не на связи)
+			};
+			aedes.publish({
+				topic: `controllers/${imei}/out/ioms/status`,
+				payload: JSON.stringify(response),
+			});
+			console.log("Response sent to out/ioms/status:", response);
+		}
+
 	}
 }
