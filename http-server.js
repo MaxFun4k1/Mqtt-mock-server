@@ -332,9 +332,61 @@ app.post('/get-input-voltages', (req, res) => {
 		});
 	}
 
-	const mqttClient = require('mqtt').connect('mqtt://localhost:1883');
+	const mqttClient = require('mqtt').connect(MQTT);
 	mqttClient.on('connect', () => {
 		mqttClient.publish(`controllers/${imei}/in/inputs/get`, '', (err) => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				});
+			}
+			res.json({
+				status: 'Command sent'
+			});
+		});
+	});
+});
+
+//Маршрут для проведении диагностики ПУ
+app.post('/perform-diagnostic', (req, res) => {
+	const {
+		imei
+	} = req.body;
+	if (!imei) {
+		return res.status(400).json({
+			error: 'Missing required fields'
+		});
+	}
+
+	const mqttClient = require('mqtt').connect(MQTT);
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/commands/info/get`, '', (err) => {
+			if (err) {
+				return res.status(500).json({
+					error: 'Failed to publish command'
+				});
+			}
+			res.json({
+				status: 'Command sent'
+			});
+		});
+	});
+});
+
+//Маршрут для запроса статуса подключения
+app.post('/get-connection-status', (req, res) => {
+	const {
+		imei
+	} = req.body;
+	if (!imei) {
+		return res.status(400).json({
+			error: 'Missing required fields'
+		});
+	}
+
+	const mqttClient = require('mqtt').connect(MQTT);
+	mqttClient.on('connect', () => {
+		mqttClient.publish(`controllers/${imei}/in/commands/info/status`, '', (err) => {
 			if (err) {
 				return res.status(500).json({
 					error: 'Failed to publish command'

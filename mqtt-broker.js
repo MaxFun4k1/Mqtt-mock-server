@@ -273,7 +273,7 @@ function handleCommand(topic, payload) {
 			}, 1000);
 		}
 
-		//Установка/снятие блокировки смены РО для КА
+		//Установка/снятие блокировки смены РО для КА 10
 		if (commandTopic.startsWith("in/outputs") && commandTopic.endWidth("/lock")) {
 			const kaNumber = commandTopic.split('/')[2]
 			const lockState = payload
@@ -292,7 +292,7 @@ function handleCommand(topic, payload) {
 			}, 1000)
 		}
 
-		//Установка/снятие флага автоматического перехода из РУ А в РУ Ч
+		//Установка/снятие флага автоматического перехода из РУ А в РУ Ч 11
 		if (commandTopic.startsWith("in/outputs") && commandTopic.endWidth("/flag")) {
 			const kaNumber = commandTopic.split('/')[2]
 			const flagState = payload
@@ -311,7 +311,7 @@ function handleCommand(topic, payload) {
 			}, 1000)
 		}
 
-		//Получить РО для каждого РУ КА
+		//Получить РО для каждого РУ КА 12
 		if (commandTopic === "in/outputs/predict") {
 			console.log("Received command to get RO for each RU")
 
@@ -326,7 +326,7 @@ function handleCommand(topic, payload) {
 			console.log("Response sent to out/outputs/prediction:", response)
 		}
 
-		//Получить текущее значения напряжений на входах
+		//Получить текущее значения напряжений на входах 13
 		if (commandTopic === "in/outputs/get") {
 			console.log("Received command to get current input voltages")
 
@@ -341,7 +341,7 @@ function handleCommand(topic, payload) {
 			console.log("Response sent to out/inputs/x:", response)
 		}
 
-		//Провести диагностику ПУ
+		//Провести диагностику ПУ 14
 		if (commandTopic === "in/commands/info/get") {
 			console.log("Received command to perform diagnostics");
 
@@ -355,6 +355,42 @@ function handleCommand(topic, payload) {
 				payload: JSON.stringify(response),
 			});
 			console.log("Response sent to out/ioms/status:", response);
+		}
+
+		//Запросить статус подключения 15
+		if (commandTopic === "in/commands/info/status") {
+			console.log('Received command to get connection status')
+
+			const response = {
+				status: 'online' // или offline в зависимости от состояния
+			}
+			aedes.publish({
+				topic: `controllers/${imei}/out/info/status`,
+				payload: JSON.stringify(response)
+			})
+			console.log("Response sent to out/info/status:", response)
+		}
+
+		//Получить данные о местоположении ПУ по GPS 19
+		if (commandTopic === "in/gps/get") {
+			console.log('Received command to get connection status')
+
+			const response = {
+				status: 'online',
+				Lt: [12.12345],
+				Lg: [43.12345],
+				Y: 2023,
+				M: 10,
+				D: 5,
+				H: 14,
+				Min: 30,
+				S: 0
+			}
+			aedes.publish({
+				topic: `controllers/${imei}/out/gps/value`,
+				payload: JSON.stringify(response)
+			})
+			console.log("Response sent to out/gps/value:", response)
 		}
 
 	}
